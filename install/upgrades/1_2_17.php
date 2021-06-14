@@ -173,14 +173,17 @@ function database_fix_mediumint_columns() {
 		$table   = $t['Tables_in_' . $database_default];
 		$columns = array();
 
-		if (!array_key_exists($table, $tables, true)) {
+		if (!array_key_exists($table, $tables)) {
+			$i   = 0;
+			$sql = 'ALTER TABLE ' . $table;
+
 			$columns = array_rekey(
 				db_fetch_assoc("SHOW COLUMNS FROM " . $table),
 					'Field', array('Type', 'Null', 'Key', 'Default', 'Extra')
 			);
 
 			foreach($columns as $field => $attribs) {
-				if (array_key_exists($field, $known_columns, true)) {
+				if (array_key_exists($field, $known_columns)) {
 					if (strpos($attribs['Type'], 'mediumint') === false) {
 						if (strpos($attribs['Type'], 'int(10) unsigned') !== false) {
 							continue;
@@ -199,9 +202,13 @@ function database_fix_mediumint_columns() {
 						}
 					}
 
-					db_install_execute($sql);
-					$total++;
+					$i++;
 				}
+			}
+
+			if ($i > 0) {
+				db_install_execute($sql);
+				$total++;
 			}
 		}
 	}
